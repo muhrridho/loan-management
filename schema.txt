@@ -1,0 +1,44 @@
+Table users {
+  id int [pk, increment]
+  email varchar 
+  name varchar
+  created_at timestamp [default: `now()`]
+}
+
+Table loans {
+  id int [pk, increment]
+  user_id int [ref: > users.id, not null]
+  interest decimal
+  interest_type varchar [ note: "e.g., flat, reducing"]
+  tenure int
+  tenure_type varchar [ note: "e.g., months, years"]
+  amount decimal
+  outstanding decimal
+  status varchar [ default: 'active', note: "e.g., active, paid"]
+  created_at timestamp [default: `now()`]
+  billing_start_at timestamp
+}
+
+Table payments {
+  id int [pk, increment]
+  loan_id int [ref: > loans.id, not null]
+  due_date date
+  amount decimal
+  status varchar [ default: 'active', note: "e.g., active, paid"]
+  paid_at timestamp [note: "null if not paid yet"]
+}
+
+Table transactions {
+  id int [pk, increment]
+  transaction_payment_id int [ref: > transaction_payments.id, not null]
+  total_amount decimal
+  penalty decimal
+  status varchar [ default: 'pending', note: "e.g., created, success"]
+  paid_at timestamp [note: "null if not paid yet"]
+  created_at timestamp [default: `now()`]
+}
+
+Table transaction_payments {
+  id int [pk, increment]
+  payment_id int [ref: > payments.id, not null]
+}

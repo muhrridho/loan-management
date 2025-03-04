@@ -1,0 +1,13 @@
+# Air configuration file
+root = "."
+tmp_dir = "tmp"
+include_ext = ["go"]
+exclude_dir = ["vendor", "tmp", ".git"]
+delay = 1000
+
+[build]
+cmd = "go build -o ./tmp/main main.go"
+bin = "./tmp/main"
+include_ext = ["go"]
+exclude_dir = ["vendor", "tmp", ".git"]
+delay = 1000
