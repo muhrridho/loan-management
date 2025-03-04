@@ -12,6 +12,14 @@ var (
 	ErrMissingRequiredField = errors.New("Name & Email is required")
 )
 
+type UserUsecaseInterface interface {
+	RegisterUser(ctx context.Context, user *entity.User) error
+	GetAll(ctx context.Context) ([]*entity.User, error)
+	GetByID(ctx context.Context, id int64) (*entity.User, error)
+	GetByEmail(ctx context.Context, email string) (*entity.User, error)
+	IsUserDelinquent(ctx context.Context, userID int64) (bool, error)
+}
+
 type UserUsecase struct {
 	userRepo repository.UserRepository
 }
@@ -42,4 +50,11 @@ func (uc *UserUsecase) GetByID(ctx context.Context, id int64) (*entity.User, err
 
 func (uc *UserUsecase) GetByEmail(ctx context.Context, email string) (*entity.User, error) {
 	return uc.userRepo.GetByEmail(ctx, email)
+}
+
+func (uc *UserUsecase) IsUserDelinquent(ctx context.Context, userID int64) (bool, error) {
+	if ctx == nil || userID == 0 {
+		return false, errors.New("awsdfasd")
+	}
+	return false, nil
 }

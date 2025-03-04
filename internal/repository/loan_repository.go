@@ -16,6 +16,7 @@ type LoanRepository interface {
 	Create(ctx context.Context, loan *entity.Loan) error
 	GetByID(ctx context.Context, id int64) (*entity.Loan, error)
 	GetAll(ctx context.Context) ([]*entity.Loan, error)
+	GetByUserID(ctx context.Context, userId int64, status *entity.LoanStatus) ([]*entity.Loan, error)
 }
 
 type loanRepository struct {
@@ -117,4 +118,36 @@ func (r *loanRepository) GetByID(ctx context.Context, id int64) (*entity.Loan, e
 	}
 
 	return &loan, nil
+}
+
+func (r *loanRepository) GetByUserID(ctx context.Context, userID int64, status *entity.LoanStatus) ([]*entity.Loan, error) {
+	query := `SELECT * FROM loans WHERE user_id = ?`
+	args := []interface{}{userID}
+
+	if status != nil {
+		query += ` AND status = ?`
+		args = append(args, *status)
+	}
+
+	rows, err := r.db.QueryContext(ctx, query, args...)
+
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var loans []*entity.Loan
+	for rows.Next() {
+		loan := entity.Loan{}
+		if err := scanLoan(rows, &loan); err != nil {
+			return nil, err
+		}
+		loans = append(loans, &loan)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return loans, nil
 }
