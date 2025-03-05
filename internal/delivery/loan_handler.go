@@ -37,7 +37,7 @@ func (h *LoanHandler) CreateLoan(ctx *fiber.Ctx) error {
 		BillingStartDate: payload.BillingStartDate,
 	}
 
-	if err := h.loanUsecase.CreateLoan(ctx.Context(), &loan); err != nil {
+	if err := h.loanUsecase.CreateLoanWithPayments(ctx.Context(), &loan); err != nil {
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 	}
 
@@ -64,7 +64,7 @@ func (h *LoanHandler) GetLoanByID(ctx *fiber.Ctx) error {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid ID format"})
 	}
 
-	loan, err := h.loanUsecase.GetLoanByID(ctx.Context(), id)
+	loan, err := h.loanUsecase.GetLoanByID(ctx.Context(), id, nil)
 
 	if loan == nil {
 		return ctx.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "Loan not found"})

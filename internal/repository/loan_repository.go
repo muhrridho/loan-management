@@ -14,11 +14,20 @@ var (
 
 type LoanRepository interface {
 	CreateLoan(ctx context.Context, loan *entity.Loan) error
-	GetLoanByID(ctx context.Context, id int64) (*entity.Loan, error)
+	CreateLoanInTx(tx *sql.Tx, loan *entity.Loan) (*entity.Loan, error)
+	GetLoanByID(ctx context.Context, id int64, status *entity.LoanStatus) (*entity.Loan, error)
 	GetAllLoans(ctx context.Context) ([]*entity.Loan, error)
 	GetLoansByUserID(ctx context.Context, userId int64, status *entity.LoanStatus) ([]*entity.Loan, error)
+	BeginTx() (*sql.Tx, error)
 }
 
+// type loanRepository struct {
+// 	db *sql.DB
+// }
+
+//	func NewLoanRepository(db *sql.DB) LoanRepository {
+//		return &loanRepository{db: db}
+//	}
 type loanRepository struct {
 	db *sql.DB
 }
@@ -68,6 +77,47 @@ func (r *loanRepository) CreateLoan(ctx context.Context, loan *entity.Loan) erro
 	return nil
 }
 
+func (r *loanRepository) CreateLoanInTx(tx *sql.Tx, loan *entity.Loan) (*entity.Loan, error) {
+	query := `
+		INSERT INTO loans (
+			user_id,
+			interest,
+			interest_type,
+			tenure,
+			tenure_type,
+			amount,
+			outstanding,
+			status,
+			created_at,
+			billing_start_at
+		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+	`
+	result, err := tx.Exec(query,
+		loan.UserID,
+		loan.Interest,
+		loan.InterestType,
+		loan.Tenure,
+		loan.TenureType,
+		loan.Amount,
+		loan.Outstanding,
+		loan.Status,
+		time.Now(),
+		loan.BillingStartDate,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	// Get the last inserted ID
+	id, err := result.LastInsertId()
+	if err != nil {
+		return nil, err
+	}
+	loan.ID = id
+
+	return loan, nil
+}
+
 func scanLoan(scanner interface{ Scan(dest ...any) error }, loan *entity.Loan) error {
 	return scanner.Scan(
 		&loan.ID,
@@ -108,9 +158,16 @@ func (r *loanRepository) GetAllLoans(ctx context.Context) ([]*entity.Loan, error
 	return loans, nil
 }
 
-func (r *loanRepository) GetLoanByID(ctx context.Context, id int64) (*entity.Loan, error) {
+func (r *loanRepository) GetLoanByID(ctx context.Context, id int64, status *entity.LoanStatus) (*entity.Loan, error) {
 	query := `SELECT * FROM loans WHERE id = ?`
-	row := r.db.QueryRowContext(ctx, query, id)
+	args := []interface{}{id}
+
+	if status != nil {
+		query += ` AND status = ?`
+		args = append(args, *status)
+	}
+
+	row := r.db.QueryRowContext(ctx, query, args...)
 	loan := entity.Loan{}
 	if err := scanLoan(row, &loan); err != nil {
 		return nil, err
@@ -149,4 +206,8 @@ func (r *loanRepository) GetLoansByUserID(ctx context.Context, userID int64, sta
 	}
 
 	return loans, nil
+}
+
+func (r *loanRepository) BeginTx() (*sql.Tx, error) {
+	return r.db.Begin()
 }

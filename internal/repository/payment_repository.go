@@ -13,53 +13,62 @@ var (
 )
 
 type PaymentRepository interface {
-	CreatePayment(ctx context.Context, loan *entity.Payment) error
+	CreatePaymentsWithTx(tx *sql.Tx, payments []*entity.Payment) error
 	GetPaymentByID(ctx context.Context, id int64) (*entity.Payment, error)
 	GetAllPayments(ctx context.Context, status *entity.PaymentStatus) ([]*entity.Payment, error)
-	GetPaymentsByLoanID(ctx context.Context, loanId int64, status *entity.PaymentStatus) ([]*entity.Payment, error)
+	GetPaymentsByLoanID(ctx context.Context, loanId int64, status *entity.PaymentStatus, dueBefore *time.Time) ([]*entity.Payment, error)
 }
 
 type paymentRepository struct {
 	db *sql.DB
 }
 
-func (r *paymentRepository) NewPaymentRepository(db *sql.DB) PaymentRepository {
+func NewPaymentRepository(db *sql.DB) PaymentRepository {
 	return &paymentRepository{db: db}
 }
 
-func (r *paymentRepository) CreatePayment(ctx context.Context, payment *entity.Payment) error {
+func (r *paymentRepository) CreatePaymentsWithTx(tx *sql.Tx, payments []*entity.Payment) error {
+	if len(payments) == 0 {
+		return errors.New("no payments to create")
+	}
+
 	query := `
 		INSERT INTO payments (
 			loan_id,
 			due_date,
+			payment_no,
 			amount,
 			interest,
 			total_amount,
 			status,
 			paid_at,
 			created_at
-		) VALUES (?, ?, ?, ?, ?, ?, ?, ?);
+		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
 	`
 
-	result, err := r.db.ExecContext(ctx, query,
-		payment.LoanID,
-		payment.DueDate,
-		payment.Amount,
-		payment.Status,
-		payment.PaidAt,
-		time.Now(),
-		time.Now(),
-	)
+	stmt, err := tx.Prepare(query)
 	if err != nil {
 		return err
 	}
+	defer stmt.Close()
 
-	id, err := result.LastInsertId()
-	if err != nil {
-		return err
+	for _, payment := range payments {
+		_, err = stmt.Exec(
+			payment.LoanID,
+			payment.DueDate,
+			payment.PaymentNo,
+			payment.Amount,
+			payment.Interest,
+			payment.TotalAmount,
+			payment.Status,
+			payment.PaidAt,
+			payment.CreatedAt,
+		)
+		if err != nil {
+			return err
+		}
 	}
 
-	payment.ID = id
 	return nil
 }
 
@@ -70,6 +79,7 @@ func scanPayment(scanner interface{ Scan(dest ...any) error }, payment *entity.P
 		&payment.ID,
 		&payment.LoanID,
 		&payment.DueDate,
+		&payment.PaymentNo,
 		&payment.Amount,
 		&payment.Interest,
 		&payment.TotalAmount,
@@ -88,7 +98,7 @@ func scanPayment(scanner interface{ Scan(dest ...any) error }, payment *entity.P
 
 func (r *paymentRepository) GetPaymentByID(ctx context.Context, id int64) (*entity.Payment, error) {
 	query := `
-		SELECT id, loan_id, due_date, amount, interest, total_amount, status, paid_at, created_at
+		SELECT id, loan_id, due_date, payment_no, amount, interest, total_amount, status, paid_at, created_at
 		FROM payments
 		WHERE id = ?
 	`
@@ -109,8 +119,8 @@ func (r *paymentRepository) GetPaymentByID(ctx context.Context, id int64) (*enti
 
 func (r *paymentRepository) GetAllPayments(ctx context.Context, status *entity.PaymentStatus) ([]*entity.Payment, error) {
 	query := `
-		SELECT id, loan_id, due_date, amount, interest, total_amount, status, paid_at, created_at
-		FROM payments
+	SELECT id, loan_id, due_date, payment_no, amount, interest, total_amount, status, paid_at, created_at
+	FROM payments
 	`
 	args := []interface{}{}
 
@@ -141,9 +151,9 @@ func (r *paymentRepository) GetAllPayments(ctx context.Context, status *entity.P
 	return payments, nil
 }
 
-func (r *paymentRepository) GetPaymentsByLoanID(ctx context.Context, loanId int64, status *entity.PaymentStatus) ([]*entity.Payment, error) {
+func (r *paymentRepository) GetPaymentsByLoanID(ctx context.Context, loanId int64, status *entity.PaymentStatus, dueBefore *time.Time) ([]*entity.Payment, error) {
 	query := `
-		SELECT id, loan_id, due_date, amount, interest, total_amount, status, paid_at, created_at
+		SELECT id, loan_id, due_date, payment_no, amount, interest, total_amount, status, paid_at, created_at
 		FROM payments
 		WHERE loan_id = ?
 	`
@@ -152,6 +162,11 @@ func (r *paymentRepository) GetPaymentsByLoanID(ctx context.Context, loanId int6
 	if status != nil {
 		query += ` AND status = ?`
 		args = append(args, *status)
+	}
+
+	if dueBefore != nil {
+		query += ` AND due_date <= ?`
+		args = append(args, dueBefore)
 	}
 
 	rows, err := r.db.QueryContext(ctx, query, args...)

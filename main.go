@@ -40,12 +40,15 @@ func main() {
 	paymentHandler := delivery.NewPaymentHandler(paymentUsecase)
 
 	loanRepo := repository.NewLoanRepository(db)
-	loanUsecase := usecase.NewLoanUsecase(loanRepo, userUsecase)
+	loanUsecase := usecase.NewLoanUsecase(loanRepo, userUsecase, paymentUsecase)
 	loanHandler := delivery.NewLoanHandler(loanUsecase)
+
+	transactionUsecase := usecase.NewTransactionUsecase(loanUsecase, paymentUsecase)
+	transactionHandler := delivery.NewTransactionHandler(transactionUsecase)
 
 	app := fiber.New()
 
-	routes := routes.NewRoutes(app, userHandler, paymentHandler, loanHandler)
+	routes := routes.NewRoutes(app, userHandler, paymentHandler, loanHandler, transactionHandler)
 	routes.SetupRoutes()
 	log.Println(app.GetRoutes())
 

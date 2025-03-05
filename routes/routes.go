@@ -7,18 +7,26 @@ import (
 )
 
 type Routes struct {
-	app            *fiber.App
-	userHandler    *delivery.UserHandler
-	paymentHandler *delivery.PaymentHandler
-	loanHandler    *delivery.LoanHandler
+	app                *fiber.App
+	userHandler        *delivery.UserHandler
+	paymentHandler     *delivery.PaymentHandler
+	loanHandler        *delivery.LoanHandler
+	transactionHandler *delivery.TransactionHandler
 }
 
-func NewRoutes(app *fiber.App, userHandler *delivery.UserHandler, paymentHandler *delivery.PaymentHandler, loanHandler *delivery.LoanHandler) *Routes {
+func NewRoutes(
+	app *fiber.App,
+	userHandler *delivery.UserHandler,
+	paymentHandler *delivery.PaymentHandler,
+	loanHandler *delivery.LoanHandler,
+	transactionHandler *delivery.TransactionHandler,
+) *Routes {
 	return &Routes{
-		app:            app,
-		userHandler:    userHandler,
-		paymentHandler: paymentHandler,
-		loanHandler:    loanHandler,
+		app:                app,
+		userHandler:        userHandler,
+		paymentHandler:     paymentHandler,
+		loanHandler:        loanHandler,
+		transactionHandler: transactionHandler,
 	}
 }
 
@@ -42,4 +50,8 @@ func (r *Routes) SetupRoutes() {
 	loans.Get("/", func(ctx *fiber.Ctx) error { return r.loanHandler.GetAllLoans(ctx) })
 	loans.Get("/:id", func(ctx *fiber.Ctx) error { return r.loanHandler.GetLoanByID(ctx) })
 	loans.Post("/create", func(ctx *fiber.Ctx) error { return r.loanHandler.CreateLoan(ctx) })
+
+	// Transaction Group
+	trx := api.Group("/transaction")
+	trx.Get("/inquiry", func(ctx *fiber.Ctx) error { return r.transactionHandler.InquiryTransaction(ctx) })
 }

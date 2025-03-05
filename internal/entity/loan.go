@@ -45,15 +45,15 @@ type TenureType int8
 
 const (
 	TenureTypeWeekly TenureType = iota
-	TenureTypeMonthly
+	// TenureTypeMonthly
 )
 
 func (it TenureType) String() string {
 	switch it {
 	case TenureTypeWeekly:
 		return "Weeks"
-	case TenureTypeMonthly:
-		return "Months"
+	// case TenureTypeMonthly:
+	// 	return "Months"
 	default:
 		return "Unknown"
 	}
