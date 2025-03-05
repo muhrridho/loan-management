@@ -26,8 +26,8 @@ func (it LoanStatus) String() string {
 type InterestType int8
 
 const (
-	InterestTypeFlatAnnual     InterestType = 1
-	InterestTypeReducingAnnual InterestType = 2
+	InterestTypeFlatAnnual InterestType = iota
+	InterestTypeReducingAnnual
 )
 
 func (it InterestType) String() string {
@@ -44,8 +44,8 @@ func (it InterestType) String() string {
 type TenureType int8
 
 const (
-	TenureTypeWeekly  TenureType = 1
-	TenureTypeMonthly TenureType = 2
+	TenureTypeWeekly TenureType = iota
+	TenureTypeMonthly
 )
 
 func (it TenureType) String() string {

@@ -54,6 +54,18 @@ func Migrate() error {
     billing_start_at TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id)
 	);
+	CREATE TABLE IF NOT EXISTS payments (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    loan_id INTEGER NOT NULL,
+    due_date DATE,
+    amount REAL,
+    interest REAL,
+    total_amount REAL,
+    status INTEGER
+    paid_at TIMESTAMP,
+    created_at TIMESTAMP,
+    FOREIGN KEY (loan_id) REFERENCES loans(id)
+	);
 	`
 	_, err := DB.Exec(query)
 	if err != nil {
@@ -76,7 +88,6 @@ func Destroy() error {
 }
 
 func Seed() error {
-	// Insert a test user into the users table
 	query := `
 	INSERT INTO users (email, name) VALUES (?, ?)
 	`
