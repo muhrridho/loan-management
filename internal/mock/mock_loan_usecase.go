@@ -11,12 +11,12 @@ type MockLoanUsecase struct {
 	mock.Mock
 }
 
-func (m *MockLoanUsecase) Create(ctx context.Context, loan *entity.Loan) error {
+func (m *MockLoanUsecase) CreateLoan(ctx context.Context, loan *entity.Loan) error {
 	args := m.Called(ctx, loan)
 	return args.Error(0)
 }
 
-func (m *MockLoanUsecase) GetAll(ctx context.Context) ([]*entity.Loan, error) {
+func (m *MockLoanUsecase) GetAllLoans(ctx context.Context) ([]*entity.Loan, error) {
 	args := m.Called(ctx)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
@@ -24,7 +24,7 @@ func (m *MockLoanUsecase) GetAll(ctx context.Context) ([]*entity.Loan, error) {
 	return args.Get(0).([]*entity.Loan), args.Error(1)
 }
 
-func (m *MockLoanUsecase) GetByID(ctx context.Context, id int64) (*entity.Loan, error) {
+func (m *MockLoanUsecase) GetLoanByID(ctx context.Context, id int64) (*entity.Loan, error) {
 	args := m.Called(ctx, id)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
@@ -32,7 +32,7 @@ func (m *MockLoanUsecase) GetByID(ctx context.Context, id int64) (*entity.Loan, 
 	return args.Get(0).(*entity.Loan), args.Error(1)
 }
 
-func (m *MockLoanUsecase) GetByUserID(ctx context.Context, userID int64, status entity.LoanStatus) ([]*entity.Loan, error) {
+func (m *MockLoanUsecase) GetLoansByUserID(ctx context.Context, userID int64, status entity.LoanStatus) ([]*entity.Loan, error) {
 	args := m.Called(ctx, userID, status)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)

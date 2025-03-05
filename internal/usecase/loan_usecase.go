@@ -26,7 +26,7 @@ func NewLoanUsecase(loanRepo repository.LoanRepository, userUsecase UserUsecaseI
 	}
 }
 
-func (lu *LoanUsecase) Create(ctx context.Context, loan *entity.Loan) error {
+func (lu *LoanUsecase) CreateLoan(ctx context.Context, loan *entity.Loan) error {
 	if err := lu.validateBillingStartDate(loan.BillingStartDate); err != nil {
 		return err
 	}
@@ -44,19 +44,19 @@ func (lu *LoanUsecase) Create(ctx context.Context, loan *entity.Loan) error {
 	} else {
 		// TODO: Implement Reduce Annual Type
 	}
-	return lu.loanRepo.Create(ctx, loan)
+	return lu.loanRepo.CreateLoan(ctx, loan)
 }
 
-func (lu *LoanUsecase) GetAll(ctx context.Context) ([]*entity.Loan, error) {
-	return lu.loanRepo.GetAll(ctx)
+func (lu *LoanUsecase) GetAllLoans(ctx context.Context) ([]*entity.Loan, error) {
+	return lu.loanRepo.GetAllLoans(ctx)
 }
 
-func (lu *LoanUsecase) GetByID(ctx context.Context, id int64) (*entity.Loan, error) {
-	return lu.loanRepo.GetByID(ctx, id)
+func (lu *LoanUsecase) GetLoanByID(ctx context.Context, id int64) (*entity.Loan, error) {
+	return lu.loanRepo.GetLoanByID(ctx, id)
 }
 
-func (lu *LoanUsecase) GetByUserID(ctx context.Context, userID int64, status entity.LoanStatus) ([]*entity.Loan, error) {
-	return lu.loanRepo.GetByUserID(ctx, userID, &status)
+func (lu *LoanUsecase) GetLoansByUserID(ctx context.Context, userID int64, status entity.LoanStatus) ([]*entity.Loan, error) {
+	return lu.loanRepo.GetLoansByUserID(ctx, userID, &status)
 }
 
 func (lu *LoanUsecase) CheckCreateLoanEligibility(ctx context.Context, loan *entity.Loan) error {
@@ -65,7 +65,7 @@ func (lu *LoanUsecase) CheckCreateLoanEligibility(ctx context.Context, loan *ent
 	}
 
 	activeStatus := entity.LoanStatusActive
-	if loans, _ := lu.GetByUserID(ctx, loan.UserID, activeStatus); loans != nil {
+	if loans, _ := lu.GetLoansByUserID(ctx, loan.UserID, activeStatus); loans != nil {
 		return ErrStillHasActiveLoan
 	}
 

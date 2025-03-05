@@ -58,10 +58,11 @@ func Migrate() error {
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     loan_id INTEGER NOT NULL,
     due_date DATE,
+    payment_no INTEGER,
     amount REAL,
     interest REAL,
     total_amount REAL,
-    status INTEGER
+    status INTEGER,
     paid_at TIMESTAMP,
     created_at TIMESTAMP,
     FOREIGN KEY (loan_id) REFERENCES loans(id)

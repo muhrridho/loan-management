@@ -28,7 +28,6 @@ func setupMocks() (*internalMock.MockLoanRepository, *internalMock.MockUserUseca
 	mockRepo := new(internalMock.MockLoanRepository)
 	mockUserUsecase := new(internalMock.MockUserUsecase)
 
-	// Set default mock expectations
 	mockUserUsecase.On("GetByID", mock.Anything, mock.Anything).Return(nil, nil)
 	mockUserUsecase.On("IsUserDelinquent", mock.Anything, mock.Anything).Return(false, nil)
 
@@ -42,10 +41,10 @@ func TestCreateLoan(t *testing.T) {
 	t.Run("Success Create Loan", func(t *testing.T) {
 		mockRepo, _, mockUsecase := setupMocks()
 
-		mockRepo.On("GetByUserID", mock.Anything, mock.Anything, mock.Anything).Return(nil, nil)
-		mockRepo.On("Create", mock.Anything, mockLoan).Return(nil)
+		mockRepo.On("GetLoansByUserID", mock.Anything, mock.Anything, mock.Anything).Return(nil, nil)
+		mockRepo.On("CreateLoan", mock.Anything, mockLoan).Return(nil)
 
-		err := mockUsecase.Create(context.Background(), mockLoan)
+		err := mockUsecase.CreateLoan(context.Background(), mockLoan)
 
 		assert.NoError(t, err)
 		mockRepo.AssertExpectations(t)
@@ -57,26 +56,26 @@ func TestCreateLoan(t *testing.T) {
 		customMockLoan := *mockLoan
 		customMockLoan.BillingStartDate, _ = time.Parse("2006-01-02", "1945-08-01")
 
-		mockRepo.On("Create", mock.Anything, customMockLoan).Return(nil)
+		mockRepo.On("CreateLoan", mock.Anything, customMockLoan).Return(nil)
 
-		err := mockUsecase.Create(context.Background(), &customMockLoan)
+		err := mockUsecase.CreateLoan(context.Background(), &customMockLoan)
 
 		assert.Error(t, err)
 		assert.Equal(t, "billing start date cannot be in the past", err.Error())
 
-		mockRepo.AssertNotCalled(t, "Create")
+		mockRepo.AssertNotCalled(t, "CreateLoan")
 
 	})
 }
 
-func TestLoanGetByID(t *testing.T) {
+func TestLoanGetLoanByID(t *testing.T) {
 
 	t.Run("Success Get Loan By ID", func(t *testing.T) {
 		mockRepo, _, mockUsecase := setupMocks()
 
-		mockRepo.On("GetByID", mock.Anything, int64(1)).Return(mockLoan, nil)
+		mockRepo.On("GetLoanByID", mock.Anything, int64(1)).Return(mockLoan, nil)
 
-		loan, err := mockUsecase.GetByID(context.Background(), 1)
+		loan, err := mockUsecase.GetLoanByID(context.Background(), 1)
 
 		assert.NoError(t, err)
 		assert.Equal(t, mockLoan, loan)
@@ -84,15 +83,15 @@ func TestLoanGetByID(t *testing.T) {
 	})
 }
 
-func TestLoanGetAll(t *testing.T) {
+func TestLoanGetAllLoans(t *testing.T) {
 
 	t.Run("Success Get All Loans", func(t *testing.T) {
 		mockRepo, _, mockUsecase := setupMocks()
 		expectedLoans := []*entity.Loan{mockLoan}
 
-		mockRepo.On("GetAll", mock.Anything).Return(expectedLoans, nil)
+		mockRepo.On("GetAllLoans", mock.Anything).Return(expectedLoans, nil)
 
-		loans, err := mockUsecase.GetAll(context.Background())
+		loans, err := mockUsecase.GetAllLoans(context.Background())
 
 		assert.NoError(t, err)
 		assert.Equal(t, expectedLoans, loans)

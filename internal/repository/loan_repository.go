@@ -13,10 +13,10 @@ var (
 )
 
 type LoanRepository interface {
-	Create(ctx context.Context, loan *entity.Loan) error
-	GetByID(ctx context.Context, id int64) (*entity.Loan, error)
-	GetAll(ctx context.Context) ([]*entity.Loan, error)
-	GetByUserID(ctx context.Context, userId int64, status *entity.LoanStatus) ([]*entity.Loan, error)
+	CreateLoan(ctx context.Context, loan *entity.Loan) error
+	GetLoanByID(ctx context.Context, id int64) (*entity.Loan, error)
+	GetAllLoans(ctx context.Context) ([]*entity.Loan, error)
+	GetLoansByUserID(ctx context.Context, userId int64, status *entity.LoanStatus) ([]*entity.Loan, error)
 }
 
 type loanRepository struct {
@@ -27,7 +27,7 @@ func NewLoanRepository(db *sql.DB) LoanRepository {
 	return &loanRepository{db: db}
 }
 
-func (r *loanRepository) Create(ctx context.Context, loan *entity.Loan) error {
+func (r *loanRepository) CreateLoan(ctx context.Context, loan *entity.Loan) error {
 	query := `
 		INSERT INTO loans (
 			user_id,
@@ -84,7 +84,7 @@ func scanLoan(scanner interface{ Scan(dest ...any) error }, loan *entity.Loan) e
 	)
 }
 
-func (r *loanRepository) GetAll(ctx context.Context) ([]*entity.Loan, error) {
+func (r *loanRepository) GetAllLoans(ctx context.Context) ([]*entity.Loan, error) {
 	query := `SELECT * FROM loans`
 	rows, err := r.db.QueryContext(ctx, query)
 	if err != nil {
@@ -108,10 +108,9 @@ func (r *loanRepository) GetAll(ctx context.Context) ([]*entity.Loan, error) {
 	return loans, nil
 }
 
-func (r *loanRepository) GetByID(ctx context.Context, id int64) (*entity.Loan, error) {
+func (r *loanRepository) GetLoanByID(ctx context.Context, id int64) (*entity.Loan, error) {
 	query := `SELECT * FROM loans WHERE id = ?`
-
-	row := r.db.QueryRowContext(ctx, query)
+	row := r.db.QueryRowContext(ctx, query, id)
 	loan := entity.Loan{}
 	if err := scanLoan(row, &loan); err != nil {
 		return nil, err
@@ -120,7 +119,7 @@ func (r *loanRepository) GetByID(ctx context.Context, id int64) (*entity.Loan, e
 	return &loan, nil
 }
 
-func (r *loanRepository) GetByUserID(ctx context.Context, userID int64, status *entity.LoanStatus) ([]*entity.Loan, error) {
+func (r *loanRepository) GetLoansByUserID(ctx context.Context, userID int64, status *entity.LoanStatus) ([]*entity.Loan, error) {
 	query := `SELECT * FROM loans WHERE user_id = ?`
 	args := []interface{}{userID}
 

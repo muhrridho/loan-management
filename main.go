@@ -13,9 +13,9 @@ import (
 )
 
 func main() {
-	if err := infrastructure.Destroy(); err != nil {
-		log.Fatalf("Failed to destroy DB: %v", err)
-	}
+	// if err := infrastructure.Destroy(); err != nil {
+	// 	log.Fatalf("Failed to destroy DB: %v", err)
+	// }
 
 	db, err := infrastructure.Initialize()
 	if err != nil {
@@ -27,13 +27,17 @@ func main() {
 		log.Fatalf("Failed to run migrations: %v", err)
 	}
 
-	if err := infrastructure.Seed(); err != nil {
-		log.Fatalf("Failed to run seeding: %v", err)
-	}
+	// if err := infrastructure.Seed(); err != nil {
+	// 	log.Fatalf("Failed to run seeding: %v", err)
+	// }
 
 	userRepo := repository.NewUserRepository(db)
 	userUsecase := usecase.NewUserUsecase(userRepo)
 	userHandler := delivery.NewUserHandler(userUsecase)
+
+	paymentRepo := repository.NewPaymentRepository(db)
+	paymentUsecase := usecase.NewPaymentUsecase(paymentRepo)
+	paymentHandler := delivery.NewPaymentHandler(paymentUsecase)
 
 	loanRepo := repository.NewLoanRepository(db)
 	loanUsecase := usecase.NewLoanUsecase(loanRepo, userUsecase)
@@ -41,7 +45,7 @@ func main() {
 
 	app := fiber.New()
 
-	routes := routes.NewRoutes(app, userHandler, loanHandler)
+	routes := routes.NewRoutes(app, userHandler, paymentHandler, loanHandler)
 	routes.SetupRoutes()
 	log.Println(app.GetRoutes())
 
