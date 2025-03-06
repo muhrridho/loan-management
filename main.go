@@ -32,7 +32,7 @@ func main() {
 	}
 
 	userRepo := repository.NewUserRepository(db)
-	userUsecase := usecase.NewUserUsecase(userRepo)
+	userUsecase := usecase.NewUserUsecase(userRepo) // im not sure here
 	userHandler := delivery.NewUserHandler(userUsecase)
 
 	paymentRepo := repository.NewPaymentRepository(db)
@@ -42,6 +42,8 @@ func main() {
 	loanRepo := repository.NewLoanRepository(db)
 	loanUsecase := usecase.NewLoanUsecase(loanRepo, userUsecase, paymentUsecase)
 	loanHandler := delivery.NewLoanHandler(loanUsecase)
+
+	userUsecase.InjectDependencies(loanUsecase)
 
 	transactionRepo := repository.NewTransactionRepository(db)
 	transactionUsecase := usecase.NewTransactionUsecase(transactionRepo, loanUsecase, paymentUsecase)

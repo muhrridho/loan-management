@@ -22,13 +22,6 @@ type LoanRepository interface {
 	BeginTx() (*sql.Tx, error)
 }
 
-// type loanRepository struct {
-// 	db *sql.DB
-// }
-
-//	func NewLoanRepository(db *sql.DB) LoanRepository {
-//		return &loanRepository{db: db}
-//	}
 type loanRepository struct {
 	db *sql.DB
 }

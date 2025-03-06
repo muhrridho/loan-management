@@ -8,6 +8,7 @@ import (
 )
 
 var (
+	ErrUserNotFound         = errors.New("User not found")
 	ErrEmailAlreadyUsed     = errors.New("Your email is already being used")
 	ErrMissingRequiredField = errors.New("Name & Email is required")
 )
@@ -21,11 +22,18 @@ type UserUsecaseInterface interface {
 }
 
 type UserUsecase struct {
-	userRepo repository.UserRepository
+	userRepo    repository.UserRepository
+	loanUsecase LoanUsecase
 }
 
 func NewUserUsecase(userRepo repository.UserRepository) *UserUsecase {
-	return &UserUsecase{userRepo: userRepo}
+	return &UserUsecase{
+		userRepo: userRepo,
+	}
+}
+
+func (u *UserUsecase) InjectDependencies(loanUsecase *LoanUsecase) {
+	u.loanUsecase = *loanUsecase
 }
 
 func (uc *UserUsecase) RegisterUser(ctx context.Context, user *entity.User) error {
@@ -53,8 +61,23 @@ func (uc *UserUsecase) GetByEmail(ctx context.Context, email string) (*entity.Us
 }
 
 func (uc *UserUsecase) IsUserDelinquent(ctx context.Context, userID int64) (bool, error) {
-	if ctx == nil || userID == 0 {
-		return false, errors.New("awsdfasd")
+
+	loanStatusActive := entity.LoanStatusActive
+	activeLoans, err := uc.loanUsecase.GetLoansByUserID(ctx, userID, loanStatusActive)
+
+	if err != nil {
+		return false, err
 	}
+
+	if len(activeLoans) == 0 {
+		return false, nil
+	}
+
+	for _, loan := range activeLoans {
+		if numOfDuePayments, _ := uc.loanUsecase.GetLoanDuePayments(ctx, loan); len(numOfDuePayments) > 2 {
+			return true, nil
+		}
+	}
+
 	return false, nil
 }

@@ -38,12 +38,12 @@ func (r *Routes) SetupRoutes() {
 	users := api.Group("/users")
 	users.Get("/", func(ctx *fiber.Ctx) error { return r.userHandler.GetAll(ctx) })
 	users.Get("/:id", func(ctx *fiber.Ctx) error { return r.userHandler.GetByID(ctx) })
+	users.Get("/:id/delinquent-status", func(ctx *fiber.Ctx) error { return r.userHandler.CheckUserDelinquentStatus(ctx) })
 	users.Post("/register", func(ctx *fiber.Ctx) error { return r.userHandler.RegisterUser(ctx) })
 
 	// Payment Group
 	payments := api.Group("/payments")
 	payments.Get("/", func(ctx *fiber.Ctx) error { return r.paymentHandler.GetAllPayments(ctx) })
-	// payments.Get("/:loan-id", func(ctx *fiber.Ctx) error { return r.paymentHandler.GetAllPayments(ctx) })
 
 	// Loans Group
 	loans := api.Group("/loans")

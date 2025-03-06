@@ -64,3 +64,19 @@ func (uh *UserHandler) GetByID(ctx *fiber.Ctx) error {
 	}
 	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{"data": user})
 }
+
+func (uh *UserHandler) CheckUserDelinquentStatus(ctx *fiber.Ctx) error {
+	id, err := strconv.ParseInt(ctx.Params("id"), 10, 64)
+
+	if err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid ID format"})
+	}
+
+	isUserDelinquent, err := uh.userUsecase.IsUserDelinquent(ctx.Context(), id)
+	if err != nil {
+		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{"data": isUserDelinquent})
+
+}

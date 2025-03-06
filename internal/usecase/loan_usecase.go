@@ -46,15 +46,22 @@ func (u *LoanUsecase) GetLoansByUserID(ctx context.Context, userID int64, status
 }
 
 func (u *LoanUsecase) CheckCreateLoanEligibility(ctx context.Context, loan *entity.Loan) error {
-	if _, err := u.userUsecase.IsUserDelinquent(ctx, loan.UserID); err != nil {
-		return err
-	}
 
-	// only
+	// Strict user to only have 1 active loan at one time
 	// activeStatus := entity.LoanStatusActive
-	// if loans, _ := lu.GetLoansByUserID(ctx, loan.UserID, activeStatus); loans != nil {
+	// if loans, _ := u.GetLoansByUserID(ctx, loan.UserID, activeStatus); loans != nil {
 	// 	return ErrStillHasActiveLoan
 	// }
+
+	// check if user is delinquent
+	isUserDelinquent, err := u.userUsecase.IsUserDelinquent(ctx, loan.UserID)
+
+	if err != nil {
+		return err
+	}
+	if isUserDelinquent {
+		return errors.New("Can't create loan due to user is delinquent")
+	}
 
 	return nil
 
