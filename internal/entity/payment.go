@@ -10,16 +10,17 @@ const (
 )
 
 type Payment struct {
-	ID          int64         `db:"id"`
-	LoanID      int64         `db:"loan_id"`
-	PaymentNo   int32         `db:"payment_no"`
-	DueDate     time.Time     `db:"due_date"`
-	Amount      float64       `db:"amount"`
-	Interest    float64       `db:"interest"`
-	TotalAmount float64       `db:"total_amount"`
-	Status      PaymentStatus `db:"status"`
-	PaidAt      *time.Time    `db:"paid_at"`
-	CreatedAt   time.Time     `db:"created_at"`
+	ID            int64         `db:"id"`
+	LoanID        int64         `db:"loan_id"`
+	TransactionID *int64        `db:"transaction_id"`
+	PaymentNo     int32         `db:"payment_no"`
+	DueDate       time.Time     `db:"due_date"`
+	Amount        float64       `db:"amount"`
+	Interest      float64       `db:"interest"`
+	TotalAmount   float64       `db:"total_amount"`
+	Status        PaymentStatus `db:"status"`
+	PaidAt        *time.Time    `db:"paid_at"`
+	CreatedAt     time.Time     `db:"created_at"`
 }
 
 type CreatePaymentPayload struct {

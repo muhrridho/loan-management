@@ -54,4 +54,5 @@ func (r *Routes) SetupRoutes() {
 	// Transaction Group
 	trx := api.Group("/transaction")
 	trx.Get("/inquiry", func(ctx *fiber.Ctx) error { return r.transactionHandler.InquiryTransaction(ctx) })
+	trx.Post("/create", func(ctx *fiber.Ctx) error { return r.transactionHandler.CreateTransaction(ctx) })
 }

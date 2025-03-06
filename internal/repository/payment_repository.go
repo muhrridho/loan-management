@@ -17,6 +17,7 @@ type PaymentRepository interface {
 	GetPaymentByID(ctx context.Context, id int64) (*entity.Payment, error)
 	GetAllPayments(ctx context.Context, status *entity.PaymentStatus) ([]*entity.Payment, error)
 	GetPaymentsByLoanID(ctx context.Context, loanId int64, status *entity.PaymentStatus, dueBefore *time.Time) ([]*entity.Payment, error)
+	PayPayment(tx *sql.Tx, paymentId int64, transactionId int64, paidAt time.Time) error
 }
 
 type paymentRepository struct {
@@ -78,6 +79,7 @@ func scanPayment(scanner interface{ Scan(dest ...any) error }, payment *entity.P
 	res := scanner.Scan(
 		&payment.ID,
 		&payment.LoanID,
+		&payment.TransactionID,
 		&payment.DueDate,
 		&payment.PaymentNo,
 		&payment.Amount,
@@ -98,7 +100,7 @@ func scanPayment(scanner interface{ Scan(dest ...any) error }, payment *entity.P
 
 func (r *paymentRepository) GetPaymentByID(ctx context.Context, id int64) (*entity.Payment, error) {
 	query := `
-		SELECT id, loan_id, due_date, payment_no, amount, interest, total_amount, status, paid_at, created_at
+		SELECT id, loan_id, transaction_id, due_date, payment_no, amount, interest, total_amount, status, paid_at, created_at
 		FROM payments
 		WHERE id = ?
 	`
@@ -119,7 +121,7 @@ func (r *paymentRepository) GetPaymentByID(ctx context.Context, id int64) (*enti
 
 func (r *paymentRepository) GetAllPayments(ctx context.Context, status *entity.PaymentStatus) ([]*entity.Payment, error) {
 	query := `
-	SELECT id, loan_id, due_date, payment_no, amount, interest, total_amount, status, paid_at, created_at
+	SELECT id, loan_id, transaction_id, due_date, payment_no, amount, interest, total_amount, status, paid_at, created_at
 	FROM payments
 	`
 	args := []interface{}{}
@@ -153,7 +155,7 @@ func (r *paymentRepository) GetAllPayments(ctx context.Context, status *entity.P
 
 func (r *paymentRepository) GetPaymentsByLoanID(ctx context.Context, loanId int64, status *entity.PaymentStatus, dueBefore *time.Time) ([]*entity.Payment, error) {
 	query := `
-		SELECT id, loan_id, due_date, payment_no, amount, interest, total_amount, status, paid_at, created_at
+		SELECT id, loan_id, transaction_id, due_date, payment_no, amount, interest, total_amount, status, paid_at, created_at
 		FROM payments
 		WHERE loan_id = ?
 	`
@@ -189,4 +191,20 @@ func (r *paymentRepository) GetPaymentsByLoanID(ctx context.Context, loanId int6
 	}
 
 	return payments, nil
+}
+
+func (r *paymentRepository) PayPayment(tx *sql.Tx, paymentID int64, transactionID int64, paidAt time.Time) error {
+	query := `
+	UPDATE payments 
+	SET	transaction_id = ?,
+			status = ?,
+			paid_at = ?
+	WHERE id = ?;
+	`
+	_, err := tx.Exec(query, transactionID, entity.PaymentStatusPaid, paidAt, paymentID)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

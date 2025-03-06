@@ -13,9 +13,9 @@ import (
 )
 
 func main() {
-	// if err := infrastructure.Destroy(); err != nil {
-	// 	log.Fatalf("Failed to destroy DB: %v", err)
-	// }
+	if err := infrastructure.Destroy(); err != nil {
+		log.Fatalf("Failed to destroy DB: %v", err)
+	}
 
 	db, err := infrastructure.Initialize()
 	if err != nil {
@@ -27,9 +27,9 @@ func main() {
 		log.Fatalf("Failed to run migrations: %v", err)
 	}
 
-	// if err := infrastructure.Seed(); err != nil {
-	// 	log.Fatalf("Failed to run seeding: %v", err)
-	// }
+	if err := infrastructure.Seed(); err != nil {
+		log.Fatalf("Failed to run seeding: %v", err)
+	}
 
 	userRepo := repository.NewUserRepository(db)
 	userUsecase := usecase.NewUserUsecase(userRepo)
@@ -43,7 +43,8 @@ func main() {
 	loanUsecase := usecase.NewLoanUsecase(loanRepo, userUsecase, paymentUsecase)
 	loanHandler := delivery.NewLoanHandler(loanUsecase)
 
-	transactionUsecase := usecase.NewTransactionUsecase(loanUsecase, paymentUsecase)
+	transactionRepo := repository.NewTransactionRepository(db)
+	transactionUsecase := usecase.NewTransactionUsecase(transactionRepo, loanUsecase, paymentUsecase)
 	transactionHandler := delivery.NewTransactionHandler(transactionUsecase)
 
 	app := fiber.New()

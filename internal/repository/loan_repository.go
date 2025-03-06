@@ -18,6 +18,7 @@ type LoanRepository interface {
 	GetLoanByID(ctx context.Context, id int64, status *entity.LoanStatus) (*entity.Loan, error)
 	GetAllLoans(ctx context.Context) ([]*entity.Loan, error)
 	GetLoansByUserID(ctx context.Context, userId int64, status *entity.LoanStatus) ([]*entity.Loan, error)
+	UpdateLoanOutstanding(tx *sql.Tx, outstanding float64, loanID int64) error
 	BeginTx() (*sql.Tx, error)
 }
 
@@ -108,7 +109,6 @@ func (r *loanRepository) CreateLoanInTx(tx *sql.Tx, loan *entity.Loan) (*entity.
 		return nil, err
 	}
 
-	// Get the last inserted ID
 	id, err := result.LastInsertId()
 	if err != nil {
 		return nil, err
@@ -206,6 +206,24 @@ func (r *loanRepository) GetLoansByUserID(ctx context.Context, userID int64, sta
 	}
 
 	return loans, nil
+}
+
+func (r *loanRepository) UpdateLoanOutstanding(tx *sql.Tx, outstanding float64, loanID int64) error {
+	var query string
+
+	if outstanding == 0 {
+		query = `UPDATE loans SET outstanding = ?, status = 99 WHERE id = ?`
+	} else {
+		query = `UPDATE loans SET outstanding = ? WHERE id = ?`
+	}
+
+	_, err := tx.Exec(query, outstanding, loanID)
+	if err != nil {
+		return err
+	}
+
+	return nil
+
 }
 
 func (r *loanRepository) BeginTx() (*sql.Tx, error) {

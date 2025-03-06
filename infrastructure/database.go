@@ -56,6 +56,7 @@ func Migrate() error {
 	);
 	CREATE TABLE IF NOT EXISTS payments (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
+		transaction_id INTEGER,
     loan_id INTEGER NOT NULL,
     due_date DATE,
     payment_no INTEGER,
@@ -66,22 +67,17 @@ func Migrate() error {
     paid_at TIMESTAMP,
     created_at TIMESTAMP,
     FOREIGN KEY (loan_id) REFERENCES loans(id)
+		FOREIGN KEY (transaction_id) REFERENCES transactions(id)
 	);
-	CREATE TABLE transaction_payments (
+	CREATE TABLE IF NOT EXISTS transactions (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    payment_id INTEGER NOT NULL,
-    FOREIGN KEY (payment_id) REFERENCES payments(id)
+    total_amount REAL,
+    penalty REAL,
+    status INTEGER,
+    paid_at TIMESTAMP,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 	);
-	CREATE TABLE transactions (
-			id INTEGER PRIMARY KEY AUTOINCREMENT,
-			transaction_payment_id INTEGER NOT NULL,
-			total_amount DECIMAL,
-			penalty DECIMAL,
-			status TEXT DEFAULT 'pending',
-			paid_at TIMESTAMP,
-			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-			FOREIGN KEY (transaction_payment_id) REFERENCES transaction_payments(id)
-	);
+
 	`
 	_, err := DB.Exec(query)
 	if err != nil {

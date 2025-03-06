@@ -59,6 +59,10 @@ func (uc *PaymentUsecase) CreatePaymentsInTx(tx *sql.Tx, payments []entity.Creat
 	return uc.paymentRepo.CreatePaymentsWithTx(tx, paymentEntities)
 }
 
+func (uc *PaymentUsecase) PayPayment(tx *sql.Tx, paymentID int64, transactionID int64, paidAt time.Time) error {
+	return uc.paymentRepo.PayPayment(tx, paymentID, transactionID, paidAt)
+}
+
 func (uc *PaymentUsecase) validatePaymentPayload(req entity.CreatePaymentPayload) error {
 	if req.LoanID <= 0 {
 		return errors.New("invalid loan ID")

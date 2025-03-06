@@ -2,7 +2,9 @@ package usecase
 
 import (
 	"context"
+	"database/sql"
 	"errors"
+	"fmt"
 	"loan-management/internal/entity"
 	"loan-management/internal/repository"
 	"time"
@@ -126,6 +128,32 @@ func (u *LoanUsecase) CreateLoanWithPayments(ctx context.Context, loan *entity.L
 	}
 
 	return nil
+}
+
+func (uc *LoanUsecase) GetLoanDuePayments(ctx context.Context, loan *entity.Loan) ([]*entity.Payment, error) {
+
+	var dueBefore time.Time
+	if loan.TenureType == entity.TenureTypeWeekly {
+		// added 7 days to include next due payments
+		dueBefore = time.Now().AddDate(0, 0, 7)
+	} else {
+		// TODO: implement monthly calculation
+	}
+
+	fmt.Println(loan)
+
+	paymentStatusActive := entity.PaymentStatusActive
+	payments, err := uc.paymentUsecase.GetPaymentsByLoanID(ctx, loan.ID, &paymentStatusActive, &dueBefore)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return payments, nil
+}
+
+func (u *LoanUsecase) UpdateLoanOutstanding(tx *sql.Tx, outstanding float64, loanID int64) error {
+	return u.loanRepo.UpdateLoanOutstanding(tx, outstanding, loanID)
 }
 
 func (lu *LoanUsecase) validateBillingStartDate(billingStartDate time.Time) error {
