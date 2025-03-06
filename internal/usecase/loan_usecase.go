@@ -73,7 +73,7 @@ func (u *LoanUsecase) CreateLoanWithPayments(ctx context.Context, loan *entity.L
 		return err
 	}
 
-	if _, err := u.userUsecase.GetByID(ctx, loan.UserID); err != nil {
+	if _, err := u.userUsecase.GetUserByID(ctx, loan.UserID); err != nil {
 		return err
 	}
 
@@ -137,7 +137,7 @@ func (u *LoanUsecase) CreateLoanWithPayments(ctx context.Context, loan *entity.L
 	return nil
 }
 
-func (uc *LoanUsecase) GetLoanDuePayments(ctx context.Context, loan *entity.Loan) ([]*entity.Payment, error) {
+func (u *LoanUsecase) GetLoanDuePayments(ctx context.Context, loan *entity.Loan) ([]*entity.Payment, error) {
 
 	var dueBefore time.Time
 	if loan.TenureType == entity.TenureTypeWeekly {
@@ -150,7 +150,7 @@ func (uc *LoanUsecase) GetLoanDuePayments(ctx context.Context, loan *entity.Loan
 	fmt.Println(loan)
 
 	paymentStatusActive := entity.PaymentStatusActive
-	payments, err := uc.paymentUsecase.GetPaymentsByLoanID(ctx, loan.ID, &paymentStatusActive, &dueBefore)
+	payments, err := u.paymentUsecase.GetPaymentsByLoanID(ctx, loan.ID, &paymentStatusActive, &dueBefore)
 
 	if err != nil {
 		return nil, err
@@ -163,15 +163,15 @@ func (u *LoanUsecase) UpdateLoanOutstanding(tx *sql.Tx, outstanding float64, loa
 	return u.loanRepo.UpdateLoanOutstanding(tx, outstanding, loanID)
 }
 
-func (lu *LoanUsecase) validateBillingStartDate(billingStartDate time.Time) error {
+func (u *LoanUsecase) validateBillingStartDate(billingStartDate time.Time) error {
 	// if billingStartDate.Before(time.Now().Truncate(24 * time.Hour)) {
 	// 	return ErrInvalidBillingStartDate
 	// }
 	return nil
 }
 
-func (lu *LoanUsecase) calculateTotalOutstanding(loan *entity.Loan) float64 {
-	totalInterest := lu.calculateInterest(loan)
+func (u *LoanUsecase) calculateTotalOutstanding(loan *entity.Loan) float64 {
+	totalInterest := u.calculateInterest(loan)
 
 	totalOutstanding := loan.Amount + totalInterest
 

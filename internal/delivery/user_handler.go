@@ -38,8 +38,8 @@ func (h *UserHandler) RegisterUser(ctx *fiber.Ctx) error {
 	return ctx.Status(fiber.StatusCreated).JSON(user)
 }
 
-func (uh *UserHandler) GetAll(ctx *fiber.Ctx) error {
-	users, err := uh.userUsecase.GetAll(ctx.Context())
+func (h *UserHandler) GetAllUsers(ctx *fiber.Ctx) error {
+	users, err := h.userUsecase.GetAllUsers(ctx.Context())
 	if err != nil {
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 	}
@@ -51,28 +51,28 @@ func (uh *UserHandler) GetAll(ctx *fiber.Ctx) error {
 	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{"data": users})
 }
 
-func (uh *UserHandler) GetByID(ctx *fiber.Ctx) error {
+func (h *UserHandler) GetUserByID(ctx *fiber.Ctx) error {
 	id, err := strconv.ParseInt(ctx.Params("id"), 10, 64)
 
 	if err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid ID format"})
 	}
 
-	user, err := uh.userUsecase.GetByID(ctx.Context(), int64(id))
+	user, err := h.userUsecase.GetUserByID(ctx.Context(), int64(id))
 	if err != nil {
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 	}
 	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{"data": user})
 }
 
-func (uh *UserHandler) CheckUserDelinquentStatus(ctx *fiber.Ctx) error {
+func (h *UserHandler) CheckUserDelinquentStatus(ctx *fiber.Ctx) error {
 	id, err := strconv.ParseInt(ctx.Params("id"), 10, 64)
 
 	if err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid ID format"})
 	}
 
-	isUserDelinquent, err := uh.userUsecase.IsUserDelinquent(ctx.Context(), id)
+	isUserDelinquent, err := h.userUsecase.IsUserDelinquent(ctx.Context(), id)
 	if err != nil {
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 	}

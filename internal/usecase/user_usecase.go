@@ -15,9 +15,9 @@ var (
 
 type UserUsecaseInterface interface {
 	RegisterUser(ctx context.Context, user *entity.User) error
-	GetAll(ctx context.Context) ([]*entity.User, error)
-	GetByID(ctx context.Context, id int64) (*entity.User, error)
-	GetByEmail(ctx context.Context, email string) (*entity.User, error)
+	GetAllUsers(ctx context.Context) ([]*entity.User, error)
+	GetUserByID(ctx context.Context, id int64) (*entity.User, error)
+	GetUserByEmail(ctx context.Context, email string) (*entity.User, error)
 	IsUserDelinquent(ctx context.Context, userID int64) (bool, error)
 }
 
@@ -36,34 +36,34 @@ func (u *UserUsecase) InjectDependencies(loanUsecase *LoanUsecase) {
 	u.loanUsecase = *loanUsecase
 }
 
-func (uc *UserUsecase) RegisterUser(ctx context.Context, user *entity.User) error {
+func (u *UserUsecase) RegisterUser(ctx context.Context, user *entity.User) error {
 	if user.Email == "" || user.Name == "" {
 		return ErrMissingRequiredField
 	}
 
-	if u, _ := uc.GetByEmail(ctx, user.Email); u != nil {
+	if user, _ := u.GetUserByEmail(ctx, user.Email); user != nil {
 		return ErrEmailAlreadyUsed
 	}
 
-	return uc.userRepo.Create(ctx, user)
+	return u.userRepo.CreateUser(ctx, user)
 }
 
-func (uc *UserUsecase) GetAll(ctx context.Context) ([]*entity.User, error) {
-	return uc.userRepo.GetAll(ctx)
+func (u *UserUsecase) GetAllUsers(ctx context.Context) ([]*entity.User, error) {
+	return u.userRepo.GetAllUsers(ctx)
 }
 
-func (uc *UserUsecase) GetByID(ctx context.Context, id int64) (*entity.User, error) {
-	return uc.userRepo.GetByID(ctx, id)
+func (u *UserUsecase) GetUserByID(ctx context.Context, id int64) (*entity.User, error) {
+	return u.userRepo.GetUserByID(ctx, id)
 }
 
-func (uc *UserUsecase) GetByEmail(ctx context.Context, email string) (*entity.User, error) {
-	return uc.userRepo.GetByEmail(ctx, email)
+func (u *UserUsecase) GetUserByEmail(ctx context.Context, email string) (*entity.User, error) {
+	return u.userRepo.GetUserByEmail(ctx, email)
 }
 
-func (uc *UserUsecase) IsUserDelinquent(ctx context.Context, userID int64) (bool, error) {
+func (u *UserUsecase) IsUserDelinquent(ctx context.Context, userID int64) (bool, error) {
 
 	loanStatusActive := entity.LoanStatusActive
-	activeLoans, err := uc.loanUsecase.GetLoansByUserID(ctx, userID, loanStatusActive)
+	activeLoans, err := u.loanUsecase.GetLoansByUserID(ctx, userID, loanStatusActive)
 
 	if err != nil {
 		return false, err
@@ -74,7 +74,7 @@ func (uc *UserUsecase) IsUserDelinquent(ctx context.Context, userID int64) (bool
 	}
 
 	for _, loan := range activeLoans {
-		if numOfDuePayments, _ := uc.loanUsecase.GetLoanDuePayments(ctx, loan); len(numOfDuePayments) > 2 {
+		if numOfDuePayments, _ := u.loanUsecase.GetLoanDuePayments(ctx, loan); len(numOfDuePayments) > 2 {
 			return true, nil
 		}
 	}

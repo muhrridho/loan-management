@@ -12,10 +12,10 @@ var (
 )
 
 type UserRepository interface {
-	Create(ctx context.Context, user *entity.User) error
-	GetAll(ctx context.Context) ([]*entity.User, error)
-	GetByID(ctx context.Context, id int64) (*entity.User, error)
-	GetByEmail(ctx context.Context, email string) (*entity.User, error)
+	CreateUser(ctx context.Context, user *entity.User) error
+	GetAllUsers(ctx context.Context) ([]*entity.User, error)
+	GetUserByID(ctx context.Context, id int64) (*entity.User, error)
+	GetUserByEmail(ctx context.Context, email string) (*entity.User, error)
 }
 
 type userRepository struct {
@@ -26,7 +26,7 @@ func NewUserRepository(db *sql.DB) UserRepository {
 	return &userRepository{db: db}
 }
 
-func (r *userRepository) Create(ctx context.Context, user *entity.User) error {
+func (r *userRepository) CreateUser(ctx context.Context, user *entity.User) error {
 	query := `INSERT INTO users (email, name, created_at) VALUES (?, ?, ?)`
 
 	result, err := r.db.ExecContext(ctx, query, user.Email, user.Name, user.CreatedAt)
@@ -43,7 +43,7 @@ func (r *userRepository) Create(ctx context.Context, user *entity.User) error {
 	return nil
 }
 
-func (r *userRepository) GetAll(ctx context.Context) ([]*entity.User, error) {
+func (r *userRepository) GetAllUsers(ctx context.Context) ([]*entity.User, error) {
 	query := `SELECT * FROM users`
 	rows, err := r.db.QueryContext(ctx, query)
 	if err != nil {
@@ -69,7 +69,7 @@ func (r *userRepository) GetAll(ctx context.Context) ([]*entity.User, error) {
 	return users, nil
 }
 
-func (r *userRepository) GetByID(ctx context.Context, id int64) (*entity.User, error) {
+func (r *userRepository) GetUserByID(ctx context.Context, id int64) (*entity.User, error) {
 	query := `SELECT * FROM users WHERE id = ?`
 
 	var user entity.User
@@ -90,7 +90,7 @@ func (r *userRepository) GetByID(ctx context.Context, id int64) (*entity.User, e
 	return &user, nil
 }
 
-func (r *userRepository) GetByEmail(ctx context.Context, email string) (*entity.User, error) {
+func (r *userRepository) GetUserByEmail(ctx context.Context, email string) (*entity.User, error) {
 	query := `SELECT * FROM users WHERE email = ?`
 
 	var user entity.User

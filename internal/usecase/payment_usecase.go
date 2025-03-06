@@ -19,27 +19,27 @@ func NewPaymentUsecase(paymentRepo repository.PaymentRepository) *PaymentUsecase
 	}
 }
 
-func (uc *PaymentUsecase) CreatePaymentsWithTx(tx *sql.Tx, payment []*entity.Payment) error {
-	return uc.paymentRepo.CreatePaymentsWithTx(tx, payment)
+func (u *PaymentUsecase) CreatePaymentsWithTx(tx *sql.Tx, payment []*entity.Payment) error {
+	return u.paymentRepo.CreatePaymentsWithTx(tx, payment)
 }
-func (uc *PaymentUsecase) GetPaymentByID(ctx context.Context, id int64) (*entity.Payment, error) {
-	return uc.paymentRepo.GetPaymentByID(ctx, id)
+func (u *PaymentUsecase) GetPaymentByID(ctx context.Context, id int64) (*entity.Payment, error) {
+	return u.paymentRepo.GetPaymentByID(ctx, id)
 }
-func (uc *PaymentUsecase) GetAllPayments(ctx context.Context, status *entity.PaymentStatus) ([]*entity.Payment, error) {
-	return uc.paymentRepo.GetAllPayments(ctx, status)
+func (u *PaymentUsecase) GetAllPayments(ctx context.Context, status *entity.PaymentStatus) ([]*entity.Payment, error) {
+	return u.paymentRepo.GetAllPayments(ctx, status)
 }
-func (uc *PaymentUsecase) GetPaymentsByLoanID(ctx context.Context, loanId int64, status *entity.PaymentStatus, dueBefore *time.Time) ([]*entity.Payment, error) {
-	return uc.paymentRepo.GetPaymentsByLoanID(ctx, loanId, status, dueBefore)
+func (u *PaymentUsecase) GetPaymentsByLoanID(ctx context.Context, loanId int64, status *entity.PaymentStatus, dueBefore *time.Time) ([]*entity.Payment, error) {
+	return u.paymentRepo.GetPaymentsByLoanID(ctx, loanId, status, dueBefore)
 }
 
-func (uc *PaymentUsecase) CreatePaymentsInTx(tx *sql.Tx, payments []entity.CreatePaymentPayload) error {
+func (u *PaymentUsecase) CreatePaymentsInTx(tx *sql.Tx, payments []entity.CreatePaymentPayload) error {
 	if len(payments) == 0 {
 		return errors.New("no payments to create")
 	}
 
 	paymentEntities := make([]*entity.Payment, len(payments))
 	for i, payload := range payments {
-		if err := uc.validatePaymentPayload(payload); err != nil {
+		if err := u.validatePaymentPayload(payload); err != nil {
 			return err
 		}
 
@@ -56,14 +56,14 @@ func (uc *PaymentUsecase) CreatePaymentsInTx(tx *sql.Tx, payments []entity.Creat
 		}
 	}
 
-	return uc.paymentRepo.CreatePaymentsWithTx(tx, paymentEntities)
+	return u.paymentRepo.CreatePaymentsWithTx(tx, paymentEntities)
 }
 
-func (uc *PaymentUsecase) PayPayment(tx *sql.Tx, paymentID int64, transactionID int64, paidAt time.Time) error {
-	return uc.paymentRepo.PayPayment(tx, paymentID, transactionID, paidAt)
+func (u *PaymentUsecase) PayPayment(tx *sql.Tx, paymentID int64, transactionID int64, paidAt time.Time) error {
+	return u.paymentRepo.PayPayment(tx, paymentID, transactionID, paidAt)
 }
 
-func (uc *PaymentUsecase) validatePaymentPayload(req entity.CreatePaymentPayload) error {
+func (u *PaymentUsecase) validatePaymentPayload(req entity.CreatePaymentPayload) error {
 	if req.LoanID <= 0 {
 		return errors.New("invalid loan ID")
 	}

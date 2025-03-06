@@ -16,22 +16,22 @@ type MockUserRepository struct {
 	mock.Mock
 }
 
-func (m *MockUserRepository) Create(ctx context.Context, user *entity.User) error {
+func (m *MockUserRepository) CreateUser(ctx context.Context, user *entity.User) error {
 	args := m.Called(ctx, user)
 	return args.Error(0)
 }
 
-func (m *MockUserRepository) GetAll(ctx context.Context) ([]*entity.User, error) {
+func (m *MockUserRepository) GetAllUsers(ctx context.Context) ([]*entity.User, error) {
 	args := m.Called(ctx)
 	return args.Get(0).([]*entity.User), args.Error(1)
 }
 
-func (m *MockUserRepository) GetByID(ctx context.Context, id int64) (*entity.User, error) {
+func (m *MockUserRepository) GetUserByID(ctx context.Context, id int64) (*entity.User, error) {
 	args := m.Called(ctx, id)
 	return args.Get(0).(*entity.User), args.Error(1)
 }
 
-func (m *MockUserRepository) GetByEmail(ctx context.Context, email string) (*entity.User, error) {
+func (m *MockUserRepository) GetUserByEmail(ctx context.Context, email string) (*entity.User, error) {
 	args := m.Called(ctx, email)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
@@ -50,8 +50,8 @@ func TestRegisterUser(t *testing.T) {
 		mockRepo := new(MockUserRepository)
 		userUsecase := NewUserUsecase(mockRepo)
 
-		mockRepo.On("GetByEmail", mock.Anything, mockUser.Email).Return(nil, nil)
-		mockRepo.On("Create", mock.Anything, mockUser).Return(nil)
+		mockRepo.On("GetUserByEmail", mock.Anything, mockUser.Email).Return(nil, nil)
+		mockRepo.On("CreateUser", mock.Anything, mockUser).Return(nil)
 
 		err := userUsecase.RegisterUser(context.Background(), mockUser)
 
@@ -65,8 +65,8 @@ func TestRegisterUser(t *testing.T) {
 		userUsecase := NewUserUsecase(mockRepo)
 
 		expectedError := errors.New("error")
-		mockRepo.On("GetByEmail", mock.Anything, mockUser.Email).Return(nil, nil)
-		mockRepo.On("Create", mock.Anything, mockUser).Return(expectedError)
+		mockRepo.On("GetUserByEmail", mock.Anything, mockUser.Email).Return(nil, nil)
+		mockRepo.On("CreateUser", mock.Anything, mockUser).Return(expectedError)
 
 		err := userUsecase.RegisterUser(context.Background(), mockUser)
 
@@ -82,7 +82,7 @@ func TestRegisterUser(t *testing.T) {
 		customMockUser := *mockUser
 		customMockUser.Name = ""
 
-		mockRepo.On("GetByEmail", mock.Anything, customMockUser.Email).Return(nil, nil)
+		mockRepo.On("GetUserByEmail", mock.Anything, customMockUser.Email).Return(nil, nil)
 		err := userUsecase.RegisterUser(context.Background(), &customMockUser)
 
 		assert.Error(t, err)
@@ -95,7 +95,7 @@ func TestRegisterUser(t *testing.T) {
 		mockRepo := new(MockUserRepository)
 		userUsecase := NewUserUsecase(mockRepo)
 
-		mockRepo.On("GetByEmail", mock.Anything, mockUser.Email).Return(mockUser, nil)
+		mockRepo.On("GetUserByEmail", mock.Anything, mockUser.Email).Return(mockUser, nil)
 
 		err := userUsecase.RegisterUser(context.Background(), mockUser)
 
@@ -106,7 +106,7 @@ func TestRegisterUser(t *testing.T) {
 	})
 }
 
-func TestUserGetAll(t *testing.T) {
+func TestUserGetAllUsers(t *testing.T) {
 	t.Run("Success Get All Users", func(t *testing.T) {
 		mockRepo := new(MockUserRepository)
 
@@ -114,8 +114,8 @@ func TestUserGetAll(t *testing.T) {
 
 		expectedUsers := []*entity.User{mockUser}
 
-		mockRepo.On("GetAll", mock.Anything).Return(expectedUsers, nil)
-		users, err := userUsecase.GetAll(context.Background())
+		mockRepo.On("GetAllUsers", mock.Anything).Return(expectedUsers, nil)
+		users, err := userUsecase.GetAllUsers(context.Background())
 
 		assert.NoError(t, err)
 		assert.Equal(t, expectedUsers, users)
@@ -129,9 +129,9 @@ func TestUserGetAll(t *testing.T) {
 		userUsecase := NewUserUsecase(mockRepo)
 
 		expectedError := errors.New("database error")
-		mockRepo.On("GetAll", mock.Anything).Return([]*entity.User{}, expectedError)
+		mockRepo.On("GetAllUsers", mock.Anything).Return([]*entity.User{}, expectedError)
 
-		users, err := userUsecase.GetAll(context.Background())
+		users, err := userUsecase.GetAllUsers(context.Background())
 
 		assert.Error(t, err)
 		assert.Equal(t, expectedError, err)
@@ -149,9 +149,9 @@ func TestUserGetByID(t *testing.T) {
 		expectedUser := mockUser
 		expectedUser.ID = 1
 
-		mockRepo.On("GetByID", mock.Anything, int64(1)).Return(expectedUser, nil)
+		mockRepo.On("GetUserByID", mock.Anything, int64(1)).Return(expectedUser, nil)
 
-		user, err := userUsecase.GetByID(context.Background(), 1)
+		user, err := userUsecase.GetUserByID(context.Background(), 1)
 
 		assert.NoError(t, err)
 		assert.Equal(t, expectedUser, user)
@@ -164,9 +164,9 @@ func TestUserGetByID(t *testing.T) {
 		userUsecase := NewUserUsecase(mockRepo)
 
 		expectedError := errors.New("user not found")
-		mockRepo.On("GetByID", mock.Anything, int64(69)).Return((*entity.User)(nil), expectedError)
+		mockRepo.On("GetUserByID", mock.Anything, int64(69)).Return((*entity.User)(nil), expectedError)
 
-		user, err := userUsecase.GetByID(context.Background(), 69)
+		user, err := userUsecase.GetUserByID(context.Background(), 69)
 
 		assert.Error(t, err)
 		assert.Nil(t, user)
