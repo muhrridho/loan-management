@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Loan Management
 
 ## Overview
@@ -173,3 +174,6 @@ curl --location 'http://localhost:3000/api/transaction/create' \
 ```bash
 curl --location 'http://localhost:3000/api/users/1/delinquent-status'
 ```
+=======
+# loan-management
+>>>>>>> 21988b7a866bc1237a36887483be50a16c8459f1
