@@ -15,15 +15,16 @@ Loan Engine Example
 - SQLite3
 
 ### Installation
-1. Copy ENV file
-```bash
-cp env.sample .env
-```
 
-2. Clone the repository
+1. Clone the repository
 ```bash
 git clone https://github.com/muhrridho/loan-management.git
 cd loan-management
+```
+
+2. Copy ENV file
+```bash
+cp env.sample .env
 ```
 
 3. Install dependencies
