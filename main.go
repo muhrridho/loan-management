@@ -1,8 +1,11 @@
 package main
 
 import (
+	"fmt"
 	"log"
+	"os"
 
+	"loan-management/cmd"
 	"loan-management/infrastructure"
 	"loan-management/internal/delivery"
 	"loan-management/internal/repository"
@@ -13,8 +16,22 @@ import (
 )
 
 func main() {
-	if err := infrastructure.Destroy(); err != nil {
-		log.Fatalf("Failed to destroy DB: %v", err)
+	if len(os.Args) > 1 {
+		command := os.Args[1]
+
+		switch command {
+		case "migrate":
+			cmd.Migrate()
+		case "seed":
+			cmd.Seed()
+		case "destroy":
+			cmd.Destroy()
+		default:
+			fmt.Println("Unknown command:", command)
+			fmt.Println("Usage: app [migrate|seed|destroy]")
+			os.Exit(1)
+		}
+		return
 	}
 
 	db, err := infrastructure.Initialize()
@@ -23,16 +40,8 @@ func main() {
 	}
 	defer infrastructure.CloseDB()
 
-	if err := infrastructure.Migrate(); err != nil {
-		log.Fatalf("Failed to run migrations: %v", err)
-	}
-
-	if err := infrastructure.Seed(); err != nil {
-		log.Fatalf("Failed to run seeding: %v", err)
-	}
-
 	userRepo := repository.NewUserRepository(db)
-	userUsecase := usecase.NewUserUsecase(userRepo) // im not sure here
+	userUsecase := usecase.NewUserUsecase(userRepo)
 	userHandler := delivery.NewUserHandler(userUsecase)
 
 	paymentRepo := repository.NewPaymentRepository(db)
