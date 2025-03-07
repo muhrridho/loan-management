@@ -13,7 +13,7 @@ var (
 )
 
 type PaymentRepository interface {
-	CreatePaymentsWithTx(tx *sql.Tx, payments []*entity.Payment) error
+	CreatePayment(tx *sql.Tx, payments []*entity.Payment) error
 	GetPaymentByID(ctx context.Context, id int64) (*entity.Payment, error)
 	GetAllPayments(ctx context.Context, status *entity.PaymentStatus) ([]*entity.Payment, error)
 	GetPaymentsByLoanID(ctx context.Context, loanId int64, status *entity.PaymentStatus, dueBefore *time.Time) ([]*entity.Payment, error)
@@ -28,7 +28,7 @@ func NewPaymentRepository(db *sql.DB) PaymentRepository {
 	return &paymentRepository{db: db}
 }
 
-func (r *paymentRepository) CreatePaymentsWithTx(tx *sql.Tx, payments []*entity.Payment) error {
+func (r *paymentRepository) CreatePayment(tx *sql.Tx, payments []*entity.Payment) error {
 	if len(payments) == 0 {
 		return errors.New("no payments to create")
 	}

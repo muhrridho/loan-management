@@ -1,7 +1,6 @@
 package delivery
 
 import (
-	"fmt"
 	"loan-management/internal/entity"
 	"loan-management/internal/usecase"
 	"strconv"
@@ -23,7 +22,6 @@ func (h *LoanHandler) CreateLoan(ctx *fiber.Ctx) error {
 	if err := ctx.BodyParser(&payload); err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid request body"})
 	}
-	fmt.Println(ctx.BodyParser(&payload))
 
 	loan := entity.Loan{
 		UserID:           payload.UserID,

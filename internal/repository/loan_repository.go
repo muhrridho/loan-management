@@ -13,8 +13,7 @@ var (
 )
 
 type LoanRepository interface {
-	CreateLoan(ctx context.Context, loan *entity.Loan) error
-	CreateLoanInTx(tx *sql.Tx, loan *entity.Loan) (*entity.Loan, error)
+	CreateLoan(tx *sql.Tx, loan *entity.Loan) (*entity.Loan, error)
 	GetLoanByID(ctx context.Context, id int64, status *entity.LoanStatus) (*entity.Loan, error)
 	GetAllLoans(ctx context.Context) ([]*entity.Loan, error)
 	GetLoansByUserID(ctx context.Context, userId int64, status *entity.LoanStatus) ([]*entity.Loan, error)
@@ -30,48 +29,7 @@ func NewLoanRepository(db *sql.DB) LoanRepository {
 	return &loanRepository{db: db}
 }
 
-func (r *loanRepository) CreateLoan(ctx context.Context, loan *entity.Loan) error {
-	query := `
-		INSERT INTO loans (
-			user_id,
-			interest,
-			interest_type,
-			tenure,
-			tenure_type,
-			amount,
-			outstanding,
-			status,
-			created_at,
-			billing_start_at
-		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
-	`
-
-	result, err := r.db.ExecContext(ctx, query,
-		loan.UserID,
-		loan.Interest,
-		loan.InterestType,
-		loan.Tenure,
-		loan.TenureType,
-		loan.Amount,
-		loan.Outstanding,
-		loan.Status,
-		time.Now(),
-		loan.BillingStartDate,
-	)
-	if err != nil {
-		return err
-	}
-
-	id, err := result.LastInsertId()
-	if err != nil {
-		return err
-	}
-
-	loan.ID = id
-	return nil
-}
-
-func (r *loanRepository) CreateLoanInTx(tx *sql.Tx, loan *entity.Loan) (*entity.Loan, error) {
+func (r *loanRepository) CreateLoan(tx *sql.Tx, loan *entity.Loan) (*entity.Loan, error) {
 	query := `
 		INSERT INTO loans (
 			user_id,

@@ -3,23 +3,24 @@ package usecase
 import (
 	"context"
 	"errors"
-	"fmt"
 	"loan-management/internal/entity"
 	"loan-management/internal/repository"
 	"time"
 )
 
+var now = time.Now
+
 type TransactionUsecase struct {
 	transactionRepository repository.TransactionRepository
-	loanUsecase           LoanUsecase
-	paymentUsecase        PaymentUsecase
+	loanUsecase           LoanUsecaseInterface
+	paymentUsecase        PaymentUsecaseInterface
 }
 
-func NewTransactionUsecase(transactionRepository repository.TransactionRepository, loanUsecase *LoanUsecase, paymentUsecase *PaymentUsecase) *TransactionUsecase {
+func NewTransactionUsecase(transactionRepository repository.TransactionRepository, loanUsecase LoanUsecaseInterface, paymentUsecase PaymentUsecaseInterface) *TransactionUsecase {
 	return &TransactionUsecase{
 		transactionRepository: transactionRepository,
-		loanUsecase:           *loanUsecase,
-		paymentUsecase:        *paymentUsecase,
+		loanUsecase:           loanUsecase,
+		paymentUsecase:        paymentUsecase,
 	}
 }
 
@@ -76,10 +77,8 @@ func (u *TransactionUsecase) CreateTransaction(ctx context.Context, trxPayload *
 	if loan == nil {
 		return nil, nil
 	}
-
 	// get all due payments that will be paid in this trx
 	duePayments, err := u.loanUsecase.GetLoanDuePayments(ctx, loan)
-	fmt.Println(duePayments)
 
 	if err != nil {
 		return nil, err
@@ -105,6 +104,7 @@ func (u *TransactionUsecase) CreateTransaction(ctx context.Context, trxPayload *
 	 * 2. Pay all payments (set status = paid, etc)
 	 * 3. Update Loan (outstanding, status, etc)
 	 */
+
 	tx, err := u.transactionRepository.BeginTx()
 	if err != nil {
 		return nil, err
@@ -117,7 +117,7 @@ func (u *TransactionUsecase) CreateTransaction(ctx context.Context, trxPayload *
 	}()
 
 	// Create transaction step
-	timeNow := time.Now()
+	timeNow := now()
 	trxStatusPaid := entity.TransactionStatusPaid
 
 	// Assume no waiting for payment, so trx will be set directly as paid
@@ -128,9 +128,7 @@ func (u *TransactionUsecase) CreateTransaction(ctx context.Context, trxPayload *
 		PaidAt:      &timeNow,
 		CreatedAt:   timeNow,
 	}
-
 	trxID, err := u.transactionRepository.CreateTransaction(tx, trx)
-
 	if err != nil {
 		return nil, err
 	}

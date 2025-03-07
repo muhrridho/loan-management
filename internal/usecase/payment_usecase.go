@@ -9,6 +9,14 @@ import (
 	"time"
 )
 
+type PaymentUsecaseInterface interface {
+	GetPaymentByID(ctx context.Context, id int64) (*entity.Payment, error)
+	GetAllPayments(ctx context.Context, status *entity.PaymentStatus) ([]*entity.Payment, error)
+	GetPaymentsByLoanID(ctx context.Context, loanId int64, status *entity.PaymentStatus, dueBefore *time.Time) ([]*entity.Payment, error)
+	CreatePayment(tx *sql.Tx, payments []entity.CreatePaymentPayload) error
+	PayPayment(tx *sql.Tx, paymentID int64, transactionID int64, paidAt time.Time) error
+}
+
 type PaymentUsecase struct {
 	paymentRepo repository.PaymentRepository
 }
@@ -19,9 +27,6 @@ func NewPaymentUsecase(paymentRepo repository.PaymentRepository) *PaymentUsecase
 	}
 }
 
-func (u *PaymentUsecase) CreatePaymentsWithTx(tx *sql.Tx, payment []*entity.Payment) error {
-	return u.paymentRepo.CreatePaymentsWithTx(tx, payment)
-}
 func (u *PaymentUsecase) GetPaymentByID(ctx context.Context, id int64) (*entity.Payment, error) {
 	return u.paymentRepo.GetPaymentByID(ctx, id)
 }
@@ -32,18 +37,18 @@ func (u *PaymentUsecase) GetPaymentsByLoanID(ctx context.Context, loanId int64, 
 	return u.paymentRepo.GetPaymentsByLoanID(ctx, loanId, status, dueBefore)
 }
 
-func (u *PaymentUsecase) CreatePaymentsInTx(tx *sql.Tx, payments []entity.CreatePaymentPayload) error {
+func (u *PaymentUsecase) CreatePayment(tx *sql.Tx, payments []entity.CreatePaymentPayload) error {
 	if len(payments) == 0 {
 		return errors.New("no payments to create")
 	}
 
-	paymentEntities := make([]*entity.Payment, len(payments))
+	newPayments := make([]*entity.Payment, len(payments))
 	for i, payload := range payments {
 		if err := u.validatePaymentPayload(payload); err != nil {
 			return err
 		}
 
-		paymentEntities[i] = &entity.Payment{
+		newPayments[i] = &entity.Payment{
 			LoanID:      payload.LoanID,
 			DueDate:     payload.DueDate,
 			PaymentNo:   payload.PaymentNo,
@@ -56,7 +61,7 @@ func (u *PaymentUsecase) CreatePaymentsInTx(tx *sql.Tx, payments []entity.Create
 		}
 	}
 
-	return u.paymentRepo.CreatePaymentsWithTx(tx, paymentEntities)
+	return u.paymentRepo.CreatePayment(tx, newPayments)
 }
 
 func (u *PaymentUsecase) PayPayment(tx *sql.Tx, paymentID int64, transactionID int64, paidAt time.Time) error {

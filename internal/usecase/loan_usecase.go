@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"fmt"
 	"loan-management/internal/entity"
 	"loan-management/internal/repository"
 	"time"
@@ -15,17 +14,23 @@ var (
 	ErrStillHasActiveLoan      = errors.New("Can't create loan because you still have an active loans")
 )
 
+type LoanUsecaseInterface interface {
+	GetAllLoans(ctx context.Context) ([]*entity.Loan, error)
+	GetLoanByID(ctx context.Context, id int64, status *entity.LoanStatus) (*entity.Loan, error)
+	GetLoansByUserID(ctx context.Context, userID int64, status entity.LoanStatus) ([]*entity.Loan, error)
+	CheckCreateLoanEligibility(ctx context.Context, loan *entity.Loan) error
+	CreateLoanWithPayments(ctx context.Context, loan *entity.Loan) error
+	GetLoanDuePayments(ctx context.Context, loan *entity.Loan) ([]*entity.Payment, error)
+	UpdateLoanOutstanding(tx *sql.Tx, outstanding float64, loanID int64) error
+}
+
 type LoanUsecase struct {
 	loanRepo       repository.LoanRepository
 	userUsecase    UserUsecaseInterface
-	paymentUsecase *PaymentUsecase
+	paymentUsecase PaymentUsecaseInterface
 }
 
-func NewLoanUsecase(
-	loanRepo repository.LoanRepository,
-	userUsecase UserUsecaseInterface,
-	paymentUsecase *PaymentUsecase,
-) *LoanUsecase {
+func NewLoanUsecase(loanRepo repository.LoanRepository, userUsecase UserUsecaseInterface, paymentUsecase PaymentUsecaseInterface) *LoanUsecase {
 	return &LoanUsecase{
 		loanRepo:       loanRepo,
 		userUsecase:    userUsecase,
@@ -55,7 +60,6 @@ func (u *LoanUsecase) CheckCreateLoanEligibility(ctx context.Context, loan *enti
 
 	// check if user is delinquent
 	isUserDelinquent, err := u.userUsecase.IsUserDelinquent(ctx, loan.UserID)
-
 	if err != nil {
 		return err
 	}
@@ -68,7 +72,6 @@ func (u *LoanUsecase) CheckCreateLoanEligibility(ctx context.Context, loan *enti
 }
 
 func (u *LoanUsecase) CreateLoanWithPayments(ctx context.Context, loan *entity.Loan) error {
-
 	if err := u.validateBillingStartDate(loan.BillingStartDate); err != nil {
 		return err
 	}
@@ -98,7 +101,7 @@ func (u *LoanUsecase) CreateLoanWithPayments(ctx context.Context, loan *entity.L
 		}
 	}()
 
-	loan, err = u.loanRepo.CreateLoanInTx(tx, loan)
+	loan, err = u.loanRepo.CreateLoan(tx, loan)
 	if err != nil {
 		return err
 	}
@@ -124,7 +127,7 @@ func (u *LoanUsecase) CreateLoanWithPayments(ctx context.Context, loan *entity.L
 		}
 	}
 
-	err = u.paymentUsecase.CreatePaymentsInTx(tx, paymentsPayload)
+	err = u.paymentUsecase.CreatePayment(tx, paymentsPayload)
 	if err != nil {
 		return err
 	}
@@ -146,8 +149,6 @@ func (u *LoanUsecase) GetLoanDuePayments(ctx context.Context, loan *entity.Loan)
 	} else {
 		// TODO: implement monthly calculation
 	}
-
-	fmt.Println(loan)
 
 	paymentStatusActive := entity.PaymentStatusActive
 	payments, err := u.paymentUsecase.GetPaymentsByLoanID(ctx, loan.ID, &paymentStatusActive, &dueBefore)

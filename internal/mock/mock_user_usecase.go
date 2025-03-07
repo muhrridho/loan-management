@@ -16,7 +16,7 @@ func (m *MockUserUsecase) RegisterUser(ctx context.Context, user *entity.User) e
 	return args.Error(0)
 }
 
-func (m *MockUserUsecase) GetAll(ctx context.Context) ([]*entity.User, error) {
+func (m *MockUserUsecase) GetAllUsers(ctx context.Context) ([]*entity.User, error) {
 	args := m.Called(ctx)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
@@ -24,7 +24,7 @@ func (m *MockUserUsecase) GetAll(ctx context.Context) ([]*entity.User, error) {
 	return args.Get(0).([]*entity.User), args.Error(1)
 }
 
-func (m *MockUserUsecase) GetByID(ctx context.Context, id int64) (*entity.User, error) {
+func (m *MockUserUsecase) GetUserByID(ctx context.Context, id int64) (*entity.User, error) {
 	args := m.Called(ctx, id)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
@@ -32,7 +32,7 @@ func (m *MockUserUsecase) GetByID(ctx context.Context, id int64) (*entity.User, 
 	return args.Get(0).(*entity.User), args.Error(1)
 }
 
-func (m *MockUserUsecase) GetByEmail(ctx context.Context, email string) (*entity.User, error) {
+func (m *MockUserUsecase) GetUserByEmail(ctx context.Context, email string) (*entity.User, error) {
 	args := m.Called(ctx, email)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
