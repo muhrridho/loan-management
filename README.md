@@ -15,34 +15,43 @@ Loan Engine Example
 - SQLite3
 
 ### Installation
+1. Copy ENV file
+```bash
+cp env.sample .env
+```
 
-1. Clone the repository
+2. Clone the repository
 ```bash
 git clone https://github.com/muhrridho/loan-management.git
 cd loan-management
 ```
 
-2. Install dependencies
+3. Install dependencies
 ```bash
 go mod download
 ```
 
-3. Run database migrations
+4. Run database migrations
 ```bash
 go run main.go migrate
 ```
 
-4. Seed the database with initial data
+5. Seed the database with initial data
 ```bash
 go run main.go seed
 ```
 
-5. Start the application
+6. Start the application
 ```bash
 go run main.go
 ```
 
-The server will start on `http://localhost:8080` by default.
+6. Optional: Destroy DB for a fresh start
+```bash
+go run main.go destroy
+```
+
+The server will start on `http://localhost:3000` by default.
 
 ## Database Schema
 See the `schema.txt` file for detailed database structure.
