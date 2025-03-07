@@ -6,6 +6,8 @@ import (
 	"errors"
 	"loan-management/internal/entity"
 	"loan-management/internal/repository"
+	"os"
+	"strconv"
 	"time"
 )
 
@@ -165,9 +167,14 @@ func (u *LoanUsecase) UpdateLoanOutstanding(tx *sql.Tx, outstanding float64, loa
 }
 
 func (u *LoanUsecase) validateBillingStartDate(billingStartDate time.Time) error {
-	// if billingStartDate.Before(time.Now().Truncate(24 * time.Hour)) {
-	// 	return ErrInvalidBillingStartDate
-	// }
+	// for testing purpose: enable loan creating with start billing date that already in the past
+	allowPastDate, err := strconv.ParseBool(os.Getenv("ALLOW_CREATE_LOAN_PAST_DATE"))
+	if err != nil {
+		allowPastDate = false
+	}
+	if !allowPastDate && billingStartDate.Before(time.Now().Truncate(24*time.Hour)) {
+		return ErrInvalidBillingStartDate
+	}
 	return nil
 }
 

@@ -13,6 +13,7 @@ import (
 	"loan-management/routes"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/joho/godotenv"
 )
 
 func main() {
@@ -32,6 +33,10 @@ func main() {
 			os.Exit(1)
 		}
 		return
+	}
+	err := godotenv.Load()
+	if err != nil {
+		log.Println("Warning: No .env file found")
 	}
 
 	db, err := infrastructure.Initialize()
@@ -62,7 +67,11 @@ func main() {
 
 	routes := routes.NewRoutes(app, userHandler, paymentHandler, loanHandler, transactionHandler)
 	routes.SetupRoutes()
-	log.Println(app.GetRoutes())
 
-	log.Fatal(app.Listen(":3100"))
+	port := os.Getenv("APP_PORT")
+	if port == "" {
+		port = "3000"
+	}
+
+	log.Fatal(app.Listen(":" + port))
 }
